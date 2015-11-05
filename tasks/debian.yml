@@ -1,0 +1,51 @@
+#
+#  Copyright 2015 VMware, Inc.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+---
+- name: add required gpg key
+  apt_key:
+    keyserver: "hkp://pgp.mit.edu:80"
+    id: "58118E89F3A912897C070ADBF76221572C52609D"
+    state: present
+
+- name: add apt sources
+  lineinfile:
+    dest: "/etc/apt/sources.list.d/docker.list"
+    line: "deb https://apt.dockerproject.org/repo ubuntu-{{ ubuntu_release }} main"
+    state: present
+    create: yes
+  notify:
+    - update apt cache
+
+- name: install Docker engine packages
+  apt: name="docker-engine" state=present
+
+- name: install docker-py python module
+  pip: name={{ item }} state=latest
+  with_items:
+    - docker-py
+
+- name: start and enable Docker at boot
+  service: name=docker enabled=yes state=started
+
+- name: add docker options to the deamon run
+  lineinfile:
+    dest: /etc/default/docker
+    regexp: "^DOCKER_OPTS="
+    line: 'DOCKER_OPTS="{{ docker_opts }}"'
+    state: present
+  notify:
+    - restart docker
+  when: docker_opts is defined
