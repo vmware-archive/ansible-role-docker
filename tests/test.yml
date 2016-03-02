@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  remote_user: root
+  sudo: yes
+
+  vars:
+    docker_running_under_docker: true
+  roles:
+    - docker

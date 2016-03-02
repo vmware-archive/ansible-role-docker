@@ -14,5 +14,51 @@
 #  limitations under the License.
 #
 ---
-- name: not implemented yet.
-  debug: "photon docker role not implemented yet."
+- name: install Docker package
+  yum: name="docker" state=present
+
+- name: install docker-py python module
+  pip: name={{ item }} state=latest
+  with_items:
+    - docker-py
+
+- name: start and enable Docker at boot
+  service: name=docker enabled=yes state=started
+  when: not docker_running_under_docker
+
+- name: assure docker group exists
+  group: name=docker gid={{ docker_gid }} state=present
+
+- name: add insecure registries to docker daemon
+  template:
+    src="{{ ansible_lsb.codename }}-docker.service.j2"
+    dest="{{ docker_unit_file }}"
+    owner=root
+    group=root
+  notify:
+    - reload unit files
+    - restart docker
+
+- name: turn off docker bridge
+  lineinfile:
+    dest: "{{ docker_service_unit }}"
+    insertafter: '\[Service\]'
+    regexp: '^ExecStartPre=-/sbin/ip link set dev .*$'
+    line: 'ExecStartPre=-/sbin/ip link set dev {{ docker_bridge_device }} down'
+    state: present
+  when: docker_disable_bridge
+  notify:
+    - daemon reload
+    - restart docker
+
+- name: remove docker bridge
+  lineinfile:
+    dest: "{{ docker_service_unit }}"
+    insertafter: 'ip link set'
+    regexp: '^ExecStartPre=-/usr/sbin/brctl delbr .*$'
+    line: 'ExecStartPre=-/usr/sbin/brctl delbr {{ docker_bridge_device }}'
+    state: present
+  when: docker_disable_bridge
+  notify:
+    - daemon reload
+    - restart docker

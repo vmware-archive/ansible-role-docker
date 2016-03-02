@@ -11,17 +11,48 @@ None known.
 
 Available variables are listed below, along with default values (see `defaults/main.yml`):
 
-    ubuntu_release: trusty
+```yaml
+# only needs to be set if running ubuntu
+ubuntu_release: trusty
 
-Ubuntu version to use for aptitude package repositories.
+# disable docker bridge?
+docker_disable_bridge: false
 
-    docker_opes: (undefined)
+# where to place/look for DOCKER_OPTS
+docker_env_file: /etc/default/docker
 
-Docker options to add to the docker daemon run command. See defaults/main.yml.
+# the docker service unit file to modify as necessary
+# given additional variables below
+docker_unit_file: /lib/systemd/system/docker.service
+
+# Which bridge to use for Docker in bridged mode
+docker_bridge_device: docker0
+
+# Additional options to add to the docker deamon
+docker_opts: ""
+
+# used to disable actions that might fail when
+# running tests under docker.
+docker_running_under_docker: false
+
+# if flannel is running, read in theat environment.
+flannel_env_file: /var/run/flannel/subnet.env
+
+# This is commented for doc purposes only. If defined
+# docker_opts (see above) will get added to the docker
+# daemon command line at start. For example:
+#   --dns 8.8.8.8 --dns 8.8.4.4
+#docker_opts: daemon
+
+# docker user/group ids (gets created) for socket access
+# and similar
+docker_user: docker
+docker_gid: 995
+```
 
 ## Example playbook
 
-```
+```yaml
 ---
 - hosts: dockers
   sudo: True

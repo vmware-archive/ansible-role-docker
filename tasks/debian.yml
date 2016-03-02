@@ -42,7 +42,7 @@
 
 - name: add docker options to the deamon run
   lineinfile:
-    dest: /etc/default/docker
+    dest: "{{ docker_env_file }}"
     regexp: "^DOCKER_OPTS="
     line: 'DOCKER_OPTS="{{ docker_opts }}"'
     state: present
